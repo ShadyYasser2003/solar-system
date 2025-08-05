@@ -4,13 +4,16 @@ on:
         branches:
             - main
             - 'feature/*'
-env:
-    MONGO_URL: ${{ secrets.MONGO_URL }}
-    MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
-    MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+
 jobs:
     unit-tests:
+        env:
+            MONGO_URL: ${{ secrets.MONGO_URL }}
+            MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
+            MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+
         runs-on: ubuntu-latest
+        
         steps:
             - name: Checkout code
               uses: actions/checkout@v4
