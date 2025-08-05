@@ -4,7 +4,10 @@ on:
         branches:
             - main
             - 'feature/*'
-            
+env:
+    MONGO_URL: ${{ secrets.MONGO_URL }}
+    MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
+    MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
 jobs:
     unit-tests:
         runs-on: ubuntu-latest
