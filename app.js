@@ -11,13 +11,11 @@ app.use(express.static(path.join(__dirname, '/')));
 app.use(cors());
 
 // MongoDB Connection
-mongoose.connect('mongodb+srv://supercluster.d83jj.mongodb.net/superData', {
-    user: 'superuser',
-    pass: 'SuperPassword',
+mongoose.connect(process.env.MONGO_URI, {
+    user: process.env.MONGO_USERNAME,
+    pass: process.env.MONGO_PASSWORD,
     useNewUrlParser: true,
-    useUnifiedTopology: true
-}).then(() => {
-    // console.log("MongoDB Connection Successful");
+    useUnifiedTopology: true}).then(() => {
 }).catch((err) => {
     console.log("MongoDB connection error: " + err);
 });
