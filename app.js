@@ -10,14 +10,19 @@ app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, '/')));
 app.use(cors());
 
-// MongoDB Connection
-mongoose.connect(process.env.MONGO_URI, {
-    user: process.env.MONGO_USERNAME,
-    pass: process.env.MONGO_PASSWORD,
+// ✅ MongoDB Connection
+const MONGO_URI = process.env.MONGO_URI.replace(
+  'mongodb+srv://',
+  `mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONGO_PASSWORD}@`
+);
+
+mongoose.connect(MONGO_URI, {
     useNewUrlParser: true,
-    useUnifiedTopology: true}).then(() => {
+    useUnifiedTopology: true
+}).then(() => {
+    console.log("✅ MongoDB connected successfully.");
 }).catch((err) => {
-    console.log("MongoDB connection error: " + err);
+    console.log("❌ MongoDB connection error: " + err);
 });
 
 const Schema = mongoose.Schema;
@@ -33,7 +38,7 @@ const dataSchema = new Schema({
 
 const planetModel = mongoose.model('planets', dataSchema);
 
-// ✅ تعديل هنا باستخدام async/await
+// ✅ استعلام بيانات الكوكب
 app.post('/planet', async (req, res) => {
     try {
         const planetData = await planetModel.findOne({ id: req.body.id });
@@ -61,20 +66,16 @@ app.get('/os', (req, res) => {
 
 app.get('/live', (req, res) => {
     res.setHeader('Content-Type', 'application/json');
-    res.send({
-        "status": "live"
-    });
+    res.send({ "status": "live" });
 });
 
 app.get('/ready', (req, res) => {
     res.setHeader('Content-Type', 'application/json');
-    res.send({
-        "status": "ready"
-    });
+    res.send({ "status": "ready" });
 });
 
 app.listen(3000, () => {
-    console.log("Server successfully running on port - " + 3000);
+    console.log("🚀 Server successfully running on port 3000");
 });
 
 module.exports = app;
