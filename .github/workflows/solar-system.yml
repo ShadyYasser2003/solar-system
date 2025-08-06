@@ -39,7 +39,7 @@ jobs:
       #     path: test-results.xml
 
       - name: Archive Test Result
-        if: failure() && (steps.nodejs-unit-testing-step.outcome == 'failure' || steps.nodejs-unit-testing-step.outcome == 'success') # work with failure only of workflow
+        if:  (steps.nodejs-unit-testing-step.outcome == 'failure' || steps.nodejs-unit-testing-step.outcome == 'success') # work with failure only of workflow
         uses: actions/upload-artifact@v4
         with:
           name: Mocha-Test-Result
