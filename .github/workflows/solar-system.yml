@@ -38,6 +38,9 @@ jobs:
           path: test-results.xml
 
   code-coverage:
+        env:
+          MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
+          MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
         name: Code Coverage
         runs-on: ubuntu-latest
         steps:
