@@ -8,6 +8,7 @@ on:
 
 jobs:
   unit-tests:
+
     runs-on: ubuntu-latest
 
     env:
@@ -35,3 +36,28 @@ jobs:
         with:
           name: test-results 
           path: test-results.xml
+
+  code-coverage:
+        name: Code Coverage
+        runs-on: ubuntu-latest
+        steps:
+          - name: Checkout Repository
+            uses: actions/checkout@v4
+          
+          - name: Setup NodeJS Version - 18
+            uses: actions/setup-node@v3
+            with:
+              node-version: 18
+              
+          - name: Install Dependencies
+            run: npm install
+            
+          - name: Check Code Coverage
+            run: npm run coverage
+            
+          - name: Archive Test Result
+            uses: actions/upload-artifact@v3
+            with:
+              name: Code-Coverage-Result
+              path: coverage
+              retention-days: 5
