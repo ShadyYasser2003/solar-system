@@ -104,4 +104,4 @@ jobs:
           context: .
           file: Dockerfile
           push: true
-          tags: shadyyasser/solar-system:latest
+          tags: shady203/solar-system:latest
