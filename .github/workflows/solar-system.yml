@@ -5,15 +5,15 @@ on:
     branches:
       - main
       - 'feature/*'
-
+env:
+      MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
+      MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
 jobs:
   unit-tests:
 
     runs-on: ubuntu-latest
 
-    env:
-      MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
-      MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+    
 
     steps:
       - name: Checkout code
@@ -52,9 +52,7 @@ jobs:
           path: test-results.xml
 
   code-coverage:
-        env:
-          MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
-          MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+      
         name: Code Coverage
         runs-on: ubuntu-latest
         steps:
