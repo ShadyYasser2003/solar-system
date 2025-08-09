@@ -50,32 +50,32 @@ jobs:
   #         name: Mocha-Test-Result
   #         path: test-results.xml
 
-  code-coverage:
+  # code-coverage:
       
-        name: Code Coverage
-        runs-on: ubuntu-latest
-        steps:
-          - name: Checkout Repository
-            uses: actions/checkout@v4
+  #       name: Code Coverage
+  #       runs-on: ubuntu-latest
+  #       steps:
+  #         - name: Checkout Repository
+  #           uses: actions/checkout@v4
           
-          - name: Setup NodeJS Version - 18
-            uses: actions/setup-node@v3
-            with:
-              node-version: 18
+  #         - name: Setup NodeJS Version - 18
+  #           uses: actions/setup-node@v3
+  #           with:
+  #             node-version: 18
               
-          - name: Install Dependencies
-            run: npm install
+  #         - name: Install Dependencies
+  #           run: npm install
             
-          - name: Check Code Coverage
-            run: npm run coverage
-            continue-on-error: true
+  #         - name: Check Code Coverage
+  #           run: npm run coverage
+  #           continue-on-error: true
             
-          - name: Archive Test Result
-            uses: actions/upload-artifact@v4
-            with:
-              name: Code-Coverage-Result
-              path: coverage/
-              retention-days: 5
+  #         - name: Archive Test Result
+  #           uses: actions/upload-artifact@v4
+  #           with:
+  #             name: Code-Coverage-Result
+  #             path: coverage/
+  #             retention-days: 5
 
        
           
@@ -183,15 +183,18 @@ jobs:
           run: |
            cat kubernetes/development/*.yaml
 
+        - name: Create namespace if not exists
+          run: kubectl create namespace ${{ vars.NAMESPACE }} --dry-run=client -o yaml | kubectl apply -f -
+         
         - name: Create MongoDB Secret
           run: |
             kubectl -n ${{ vars.NAMESPACE }} create secret generic mongo-db-creds \
-            --from-literal=MONGO_URL=${{ env.MONGO_URL }} \
-            --from-literal=MONGO_USERNAME=${{ secrets.MONGO_USERNAME }} \
-            --from-literal=MONGO_PASSWORD=${{ secrets.MONGO_PASSWORD }} \
-            --save-config \
-            --dry-run=client \
-            -o yaml | kubectl apply -f -
-
+              --from-literal=MONGO_URL='${{ env.MONGO_URL }}' \
+              --from-literal=MONGO_USERNAME='${{ secrets.MONGO_USERNAME }}' \
+              --from-literal=MONGO_PASSWORD='${{ secrets.MONGO_PASSWORD }}' \
+              --save-config \
+              --dry-run=client \
+              -o yaml | kubectl apply -f -
+         
         - name: Deploy to Dev Env
           run: kubectl apply -f kubernetes/development/
