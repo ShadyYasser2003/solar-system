@@ -10,6 +10,7 @@ spec:
   - port: 3000
     protocol: TCP
     targetPort: 3000
+    nodePort: 32000   # اختر رقم بين 30000 و 32767
   selector:
     app: solar-system 
   type: NodePort

@@ -1,24 +1,29 @@
-apiVersion: networking.k8s.io/v1
-kind: Ingress
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  annotations:
-    kubernetes.io/ingress.class: nginx
-    kubernetes.io/tls-acme: "true"
+  labels:
+    app: solar-system
   name: solar-system
   namespace: __NAMESPACE__
 spec:
-  rules:
-    - host: solar-system-__NAMESPACE__.__INGRESS_IP__.nip.io
-      http:
-        paths:
-          - backend:
-              service:
-                name: solar-system
-                port:
-                  number: 3000
-            path: /
-            pathType: Prefix
-  tls:
-    - hosts:
-        - solar-system-__NAMESPACE__.__INGRESS_IP__.nip.io
-      secretName: ingress-local-tls
+  replicas: __REPLICAS__
+  selector:
+    matchLabels:
+      app: solar-system
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: solar-system
+    spec:
+      containers:
+      - image: __IMAGE__
+        imagePullPolicy: Always
+        name: solar-system
+        ports:
+        - containerPort: 3000
+          name: http
+          protocol: TCP
+        envFrom:
+        - secretRef:
+            name: mongo-db-creds
