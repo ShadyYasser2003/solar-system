@@ -130,53 +130,79 @@ jobs:
   #         wget -q -O - 127.0.0.1:3000/live | grep live    
 
   dev-deploy:
-      runs-on: ubuntu-latest
-      steps:
-        - name: Checkout Repo
-          uses: actions/checkout@v4
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
 
-        - name: Configure AWS credentials for EKS
-          uses: aws-actions/configure-aws-credentials@v3
-          with:
-            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            aws-region: us-east-1  # غيّرها حسب منطقة الكلاستر بتاعك
-    
-        - name: Install kubectl CLI
-          uses: azure/setup-kubectl@v3
-          with:
-            version: 'v1.26.0'
+      - name: Configure AWS credentials for EKS
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
 
-        - name: Set KubeConfig file
-          uses: azure/k8s-set-context@v3
-          with:
-            method: kubeconfig
-            context: eks_user@shadi-cluster.us-east-1.eksctl.io
-            kubeconfig: ${{ secrets.KUBE_CONFIG }}
+      - name: Install kubectl CLI
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.26.0'
 
+      - name: Set KubeConfig file
+        uses: azure/k8s-set-context@v3
+        with:
+          method: kubeconfig
+          context: eks_user@shadi-cluster.us-east-1.eksctl.io
+          kubeconfig: ${{ secrets.KUBE_CONFIG }}
 
-        - name: Fetch Kubernetes Cluster Details
-          run: |
-            kubectl version --short
-            echo ---------------------
-            kubectl get nodes          
+      - name: Fetch Kubernetes Cluster Details
+        run: |
+          kubectl version --short
+          echo ---------------------
+          kubectl get nodes          
 
-        - name: Save Nginx Ingress Controller IP as a GITHUB Environment Variable
-          run: |
-            echo "INGRESS_IP=$(kubectl -n ingress-nginx get services ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}')" >> $GITHUB_ENV
-            
-        - name: Replace Token in Manifest files
-          uses: cschleiden/replace-tokens@v1
-          with:
-            tokenPrefix: '__'
-            tokenSuffix: '__' 
-            files: '["kubernetes/development/*.yaml"]'
-          env:
-            NAMESPACE: ${{ vars.NAMESPACE }}
-            REPLICAS: ${{ vars.REPLICAS }}
-            IMAGE: ${{ secrets.DOCKER_USERNAME }}/solar-system:${{ github.sha }}
-            INGRESS_IP: ${{ env.INGRESS_IP }}
+      - name: Deploy Nginx Ingress Controller if not exists
+        run: |
+          if ! kubectl get ns ingress-nginx >/dev/null 2>&1; then
+            kubectl create namespace ingress-nginx
+            kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/aws/deploy.yaml
+          else
+            echo "Ingress-nginx already exists, skipping installation"
+          fi
 
-        - name: check kubernetes manifests
-          run: |
-           cat kubernetes/development/*.yaml
+      - name: Wait for Ingress Controller external IP/hostname
+        run: |
+          echo "Waiting for ingress-nginx-controller external IP..."
+          for i in {1..30}; do
+            IP=$(kubectl -n ingress-nginx get svc ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+            HOST=$(kubectl -n ingress-nginx get svc ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+            if [ -n "$IP" ] || [ -n "$HOST" ]; then
+              echo "Found Ingress: $IP$HOST"
+              break
+            fi
+            echo "Still waiting..."
+            sleep 10
+          done
+
+      - name: Save Nginx Ingress Controller IP as a GITHUB Environment Variable
+        run: |
+          INGRESS_IP=$(kubectl -n ingress-nginx get svc ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          if [ -z "$INGRESS_IP" ]; then
+            INGRESS_IP=$(kubectl -n ingress-nginx get svc ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+          fi
+          echo "INGRESS_IP=${INGRESS_IP}" >> $GITHUB_ENV
+
+      - name: Replace Token in Manifest files
+        uses: cschleiden/replace-tokens@v1
+        with:
+          tokenPrefix: '__'
+          tokenSuffix: '__'
+          files: '["kubernetes/development/*.yaml"]'
+        env:
+          NAMESPACE: ${{ vars.NAMESPACE }}
+          REPLICAS: ${{ vars.REPLICAS }}
+          IMAGE: ${{ secrets.DOCKER_USERNAME }}/solar-system:${{ github.sha }}
+          INGRESS_IP: ${{ env.INGRESS_IP }}
+
+      - name: Check Kubernetes manifests
+        run: |
+          cat kubernetes/development/*.yaml
