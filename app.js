@@ -10,13 +10,9 @@ app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, '/')));
 app.use(cors());
 
-// MongoDB Connection using env variables
-const username = process.env.MONGO_USERNAME;
-const password = process.env.MONGO_PASSWORD;
-const dbName = 'superData';
+// MongoDB Connection using env variables;
 
-const mongoUri = `mongodb+srv://${username}:${password}@supercluster.d83jj.mongodb.net/${dbName}?retryWrites=true&w=majority`;
-
+const mongoUri = process.env.MONGO_URL;
 mongoose.connect(mongoUri)
     .then(() => {
         console.log("✅ Connected to MongoDB");
