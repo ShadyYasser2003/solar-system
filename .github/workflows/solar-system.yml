@@ -197,7 +197,7 @@ jobs:
     steps:
       - name: test before testing
 
-        run: |
+        run: | 
           echo "Testing on $URL"
           RESPONSE=$(curl -sS "http://$URL:32000/live-s-k")
           echo "Response: $RESPONSE"
