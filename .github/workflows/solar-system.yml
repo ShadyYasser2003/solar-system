@@ -10,72 +10,72 @@ env:
     MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
     MONGO_URL: mongodb+srv://${{ secrets.MONGO_USERNAME }}:${{ secrets.MONGO_PASSWORD }}@supercluster.d83jj.mongodb.net/superData?retryWrites=true&w=majorityjobs
 jobs:
-      # unit-tests:
+  unit-tests:
 
-  #   runs-on: ubuntu-latest
+    runs-on: ubuntu-latest
 
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-  #     - name: Set up Node.js
-  #       uses: actions/setup-node@v3
-  #       with:
-  #         node-version: '18'
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
           
-  #     - name: Cache NPM dependencies
-  #       uses: actions/cache@v3
-  #       with:
-  #         path: node_modules
-  #         key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+      - name: Cache NPM dependencies
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
 
-  #     - name: Install dependencies
-  #       run: npm install
+      - name: Install dependencies
+        run: npm install
 
-  #     - name: Run unit tests
-  #       id: nodejs-unit-testing-step 
-  #       run: npm test
+      - name: Run unit tests
+        id: nodejs-unit-testing-step 
+        run: npm test
 
-  #     # - name: Upload test results
-  #     #   if: always()
-  #     #   uses: actions/upload-artifact@v4
-  #     #   with:
-  #     #     name: test-results 
-  #     #     path: test-results.xml
+      # - name: Upload test results
+      #   if: always()
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: test-results 
+      #     path: test-results.xml
 
-  #     - name: Archive Test Result
-  #       if:  (steps.nodejs-unit-testing-step.outcome == 'failure' || steps.nodejs-unit-testing-step.outcome == 'success') # work with failure only of workflow
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: Mocha-Test-Result
-  #         path: test-results.xml
+      - name: Archive Test Result
+        if:  (steps.nodejs-unit-testing-step.outcome == 'failure' || steps.nodejs-unit-testing-step.outcome == 'success') # work with failure only of workflow
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mocha-Test-Result
+          path: test-results.xml
 
-  # code-coverage:
+  code-coverage:
       
-  #       name: Code Coverage
-  #       runs-on: ubuntu-latest
-  #       steps:
-  #         - name: Checkout Repository
-  #           uses: actions/checkout@v4
+        name: Code Coverage
+        runs-on: ubuntu-latest
+        steps:
+          - name: Checkout Repository
+            uses: actions/checkout@v4
           
-  #         - name: Setup NodeJS Version - 18
-  #           uses: actions/setup-node@v3
-  #           with:
-  #             node-version: 18
+          - name: Setup NodeJS Version - 18
+            uses: actions/setup-node@v3
+            with:
+              node-version: 18
               
-  #         - name: Install Dependencies
-  #           run: npm install
+          - name: Install Dependencies
+            run: npm install
             
-  #         - name: Check Code Coverage
-  #           run: npm run coverage
-  #           continue-on-error: true
+          - name: Check Code Coverage
+            run: npm run coverage
+            continue-on-error: true
             
-  #         - name: Archive Test Result
-  #           uses: actions/upload-artifact@v4
-  #           with:
-  #             name: Code-Coverage-Result
-  #             path: coverage/
-  #             retention-days: 5
+          - name: Archive Test Result
+            uses: actions/upload-artifact@v4
+            with:
+              name: Code-Coverage-Result
+              path: coverage/
+              retention-days: 5
 
        
           
@@ -84,6 +84,7 @@ jobs:
       contents: read
       packages: write
     runs-on: ubuntu-latest
+    needs: [unit-tests, code-coverage]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -131,8 +132,14 @@ jobs:
           # wget -q -O - 127.0.0.1:3000/live | grep live    
 
   dev-deploy:
+      if: contains(github.ref, 'feature/')
       runs-on: ubuntu-latest
       needs: docker
+      environment: 
+        name: development
+        url: ${{ steps.set_ingress_ip.outputs.SET_INGRESS_IP }}
+      outputs:
+        ingress_ip: ${{ steps.set_ingress_ip.outputs.SET_INGRESS_IP }}
       steps:
         - name: Checkout Repo
           uses: actions/checkout@v4
@@ -156,7 +163,6 @@ jobs:
             context: eks_user@shadi-cluster.us-east-1.eksctl.io
             kubeconfig: ${{ secrets.KUBE_CONFIG }}
 
-
         - name: Fetch Kubernetes Cluster Details
           run: |
             kubectl version --short
@@ -164,9 +170,12 @@ jobs:
             kubectl get nodes          
 
         - name: Save Nginx Ingress Controller hostname as a GITHUB Environment Variable
+          id: set_ingress_ip
           run: |
             echo "INGRESS_IP=$(kubectl -n ingress-nginx get service ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')" >> $GITHUB_ENV
 
+        - name: Set ingress IP
+          run: echo "SET_INGRESS_IP=${{ env.INGRESS_IP }}" >> $GITHUB_OUTPUT
             
         - name: Replace Token in Manifest files
           uses: cschleiden/replace-tokens@v1
@@ -199,3 +208,110 @@ jobs:
          
         - name: Deploy to Dev Env
           run: kubectl apply -f kubernetes/development/
+
+  dev-integration-testing:
+    if: contains(github.ref, 'feature/')
+    name: Dev Integration Testing
+    needs: dev-deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test URL Output using CURL and JQ
+        env:
+          URL: ${{ needs.dev-deploy.outputs.ingress_ip }}
+        run: |
+          echo $URL
+          echo "---"
+          curl -sS "https://$URL/live-s-k" | jq -r '.status' | grep -i live
+
+  prod-deploy:
+      if: github.ref == 'refs/heads/main'
+      runs-on: ubuntu-latest
+      needs: docker
+      environment: 
+        name: production
+        url: ${{ steps.set_ingress_ip.outputs.SET_INGRESS_IP }}
+      outputs:
+        ingress_ip: ${{ steps.set_ingress_ip.outputs.SET_INGRESS_IP }}
+      steps:
+        - name: Checkout Repo
+          uses: actions/checkout@v4
+
+        - name: Configure AWS credentials for EKS
+          uses: aws-actions/configure-aws-credentials@v3
+          with:
+            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            aws-region: us-east-1  # غيّرها حسب منطقة الكلاستر بتاعك
+    
+        - name: Install kubectl CLI
+          uses: azure/setup-kubectl@v3
+          with:
+            version: 'v1.26.0'
+
+        - name: Set KubeConfig file
+          uses: azure/k8s-set-context@v3
+          with:
+            method: kubeconfig
+            context: eks_user@shadi-cluster.us-east-1.eksctl.io
+            kubeconfig: ${{ secrets.KUBE_CONFIG }}
+
+        - name: Fetch Kubernetes Cluster Details
+          run: |
+            kubectl version --short
+            echo ---------------------
+            kubectl get nodes          
+
+        - name: Save Nginx Ingress Controller hostname as a GITHUB Environment Variable
+          id: set_ingress_ip
+          run: |
+            echo "INGRESS_IP=$(kubectl -n ingress-nginx get service ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')" >> $GITHUB_ENV
+
+        - name: Set ingress IP
+          run: echo "SET_INGRESS_IP=${{ env.INGRESS_IP }}" >> $GITHUB_OUTPUT
+            
+        - name: Replace Token in Manifest files
+          uses: cschleiden/replace-tokens@v1
+          with:
+            tokenPrefix: '__'
+            tokenSuffix: '__' 
+            files: '["kubernetes/production/*.yaml"]'
+          env:
+            NAMESPACE: ${{ vars.NAMESPACE }}
+            REPLICAS: ${{ vars.REPLICAS }}
+            IMAGE: ${{ secrets.DOCKER_USERNAME }}/solar-system:${{ github.sha }}
+            INGRESS_IP: ${{ env.INGRESS_IP }}
+
+        - name: check kubernetes manifests
+          run: |
+           cat kubernetes/production/*.yaml
+
+        - name: Create namespace if not exists
+          run: kubectl create namespace ${{ vars.NAMESPACE }} --dry-run=client -o yaml | kubectl apply -f -
+         
+        - name: Create MongoDB Secret
+          run: |
+            kubectl -n ${{ vars.NAMESPACE }} create secret generic mongo-db-creds \
+              --from-literal=MONGO_URL='${{ env.MONGO_URL }}' \
+              --from-literal=MONGO_USERNAME='${{ secrets.MONGO_USERNAME }}' \
+              --from-literal=MONGO_PASSWORD='${{ secrets.MONGO_PASSWORD }}' \
+              --save-config \
+              --dry-run=client \
+              -o yaml | kubectl apply -f -
+         
+        - name: Deploy to PROD Env
+          run: kubectl apply -f kubernetes/production/
+
+  prod-integration-testing:
+    if: github.ref == 'refs/heads/main'
+    name: Dev Integration Testing
+    needs: prod-deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test URL Output using CURL and JQ
+        env:
+          URL: ${{ needs.prod-deploy.outputs.ingress_ip }}
+        run: |
+          echo $URL
+          echo "---"
+          curl -sS "https://$URL/live-s-k" | jq -r '.status' | grep -i live
+
