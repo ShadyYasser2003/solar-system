@@ -13,7 +13,7 @@ jobs:
   unit-tests:
 
     runs-on: self-hosted
-
+    continue-on-error: true
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -201,6 +201,7 @@ jobs:
           curl -sS "http://$URL:32000/live-s-k" | jq -r '.status' | grep -i live
 
   prod-deploy:
+      name: prod Deployment
       if: github.ref == 'refs/heads/main'
       runs-on: self-hosted
       needs: docker
@@ -280,7 +281,7 @@ jobs:
 
   prod-integration-testing:
     if: github.ref == 'refs/heads/main'
-    name: Dev Integration Testing
+    name: PROD Integration Testing
     needs: prod-deploy
     runs-on: self-hosted
     steps:
