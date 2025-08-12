@@ -13,7 +13,8 @@ jobs:
             
             - name: node version
               run: node --version
-
+            - name: minikube status
+              run: minikube status
             - name: Run tests
               run: |
                 echo "Running tests..."
