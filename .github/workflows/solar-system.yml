@@ -206,7 +206,7 @@ jobs:
       - name: Test URL Output using CURL and JQ
         run: |
           echo "Testing on $URL"
-          curl -sS "http://$URL:32000/live-s-k" | jq -r '.status' | grep -i live
+          curl -sS "http://$URL:32000/live" | jq -r '.status' | grep -i live
 
   prod-deploy:
       name: prod Deployment
