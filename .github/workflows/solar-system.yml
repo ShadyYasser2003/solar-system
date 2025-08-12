@@ -84,7 +84,7 @@ jobs:
       contents: read
       packages: write
     runs-on: self-hosted
-    needs: [unit-tests, code-coverage]
+    needs: [code-coverage]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
