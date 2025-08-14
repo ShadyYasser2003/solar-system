@@ -199,7 +199,7 @@ jobs:
 
         run: | 
           echo "Testing on $URL"
-          RESPONSE=$(curl -sS "http://$URL:32000/live-s-k")
+          RESPONSE=$(curl -sS "http://$URL:32000/live")
           echo "Response: $RESPONSE"
           echo "$RESPONSE" | jq -r '.status' | grep -i live
 
