@@ -8,7 +8,7 @@ on:
 env:
     MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
     MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
-    MONGO_URL: mongodb+srv://${{ secrets.MONGO_USERNAME }}:${{ secrets.MONGO_PASSWORD }}@supercluster.d83jj.mongodb.net/superData?retryWrites=true&w=majorityjobs
+    MONGO_URL: mongodb+srv://${{ secrets.MONGO_USERNAME }}:${{ secrets.MONGO_PASSWORD }}@supercluster.d83jj.mongodb.net/superData?retryWrites=true&w=majority
 jobs:
   # unit-tests:
 
@@ -136,6 +136,12 @@ jobs:
     if: contains(github.ref, 'feature/')
     needs: docker
     uses: ./.github/workflows/reuse-workflow.yml
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
+      MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+    with:
+      MONGO_URL: ${{ env.MONGO_URL }}    
    
   dev-integration-testing:
     if: contains(github.ref, 'feature/')
@@ -143,7 +149,7 @@ jobs:
     needs: dev-deploy
     runs-on: self-hosted
     env:
-          URL: ${{ needs.dev-deploy.outputs.ingress_ip }}
+        URL: ${{ needs.dev-deploy.outputs.ingress_ip }}
     steps:
       - name: test before testing  
 

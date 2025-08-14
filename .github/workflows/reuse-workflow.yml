@@ -2,6 +2,17 @@ name: reuseable-workflow
 
 on:
   workflow_call:
+   secrets:
+      DOCKER_USERNAME: 
+        required: true
+      MONGO_USERNAME:
+        required: true
+      MONGO_PASSWORD: 
+        required: true
+   inputs:
+      MONGO_URL:
+        required: true
+        type: string
 
 jobs:
 
@@ -50,7 +61,7 @@ jobs:
       - name: Create MongoDB Secret
         run: |
           kubectl -n ${{ vars.NAMESPACE }} create secret generic mongo-db-creds \
-          --from-literal=MONGO_URL='${{ env.MONGO_URL }}' \
+          --from-literal=MONGO_URL='${{ inputs.MONGO_URL }}' \
           --from-literal=MONGO_USERNAME='${{ secrets.MONGO_USERNAME }}' \
           --from-literal=MONGO_PASSWORD='${{ secrets.MONGO_PASSWORD }}' \
           --save-config \
