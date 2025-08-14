@@ -136,6 +136,8 @@ jobs:
     if: contains(github.ref, 'feature/')
     needs: docker
     uses: ./.github/workflows/reuse-workflow.yml
+    with:
+      job-name: "dev-deploy"
     
   
   dev-integration-testing:
@@ -143,6 +145,8 @@ jobs:
     if: contains(github.ref, 'feature/')
     needs: dev-deploy
     uses: ./.github/workflows/reuse-workflow.yml
+    with:
+      job-name: "dev-integration-testing"    
    
   prod-deploy:
     name: prod Deployment

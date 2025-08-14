@@ -2,10 +2,16 @@ name: reuseable-workflow
 
 on:
   workflow_call:
+    inputs:
+        job-name:
+            description: 'Name of the job to run'
+            required: true
+            type: string
 
 jobs:
 
   dev-deploy:
+    if: ${{ inputs.job-name == 'dev-deploy' }}
     runs-on: self-hosted
     environment: 
       name: development
@@ -61,6 +67,7 @@ jobs:
         run: kubectl apply -f kubernetes/development/
 
   dev-integration-testing:
+    if: ${{ inputs.job-name == 'dev-integration-testing' }}
     runs-on: self-hosted
     env:
       URL: ${{ needs.dev-deploy.outputs.ingress_ip }}
