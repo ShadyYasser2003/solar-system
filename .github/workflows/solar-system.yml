@@ -141,8 +141,10 @@ jobs:
       MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
       MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
     with:
-      MONGO_URL: ${{ env.MONGO_URL }}    
-   
+      MONGO_URL: ${{ vars.MONGO_URL }}
+      kubernates-manifest-path: kubernetes/development/
+      environment: development
+         
   dev-integration-testing:
     if: contains(github.ref, 'feature/')
     name: Dev Integration Testing
@@ -170,7 +172,15 @@ jobs:
     needs: docker
     if: github.ref == 'refs/heads/main'
     uses: ./.github/workflows/reuse-workflow.yml 
-   
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
+      MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+    with:
+      MONGO_URL: ${{ vars.MONGO_URL }}
+      kubernates-manifest-path: kubernetes/production/
+      environment: production
+      
 
   prod-integration-testing:
         if: github.ref == 'refs/heads/main'
