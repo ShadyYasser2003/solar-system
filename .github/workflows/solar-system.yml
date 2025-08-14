@@ -84,7 +84,7 @@ jobs:
       contents: read
       packages: write
     runs-on: ubuntu-latest
-    # needs: [code-coverage]
+    # needs: [code-coverage]  
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -136,10 +136,7 @@ jobs:
     if: contains(github.ref, 'feature/')
     needs: docker
     uses: ./.github/workflows/reuse-workflow.yml
-    with:
-      job-name: "dev-deploy"
-    
-  
+   
   dev-integration-testing:
     if: contains(github.ref, 'feature/')
     name: Dev Integration Testing
@@ -167,8 +164,7 @@ jobs:
     needs: docker
     if: github.ref == 'refs/heads/main'
     uses: ./.github/workflows/reuse-workflow.yml
-    with:
-      job-name: "prod-deploy"   
+   
 
   prod-integration-testing:
         if: github.ref == 'refs/heads/main'
