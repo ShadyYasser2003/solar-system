@@ -13,3 +13,4 @@ spec:
   selector:
     app: solar-system 
   type: NodePort
+  
