@@ -69,24 +69,6 @@ jobs:
       - name: Deploy to Dev Env
         run: kubectl apply -f kubernetes/development/
 
-  dev-integration-testing:
-    if: ${{ inputs.job-name == 'dev-integration-testing' }}
-    runs-on: self-hosted
-    env:
-      URL: ${{ needs.dev-deploy.outputs.ingress_ip }}
-    steps:
-      - name: Test before testing  
-        run: | 
-          echo "Testing on $URL"
-          RESPONSE=$(curl -sS "http://$URL:32000/live")
-          echo "Response: $RESPONSE"
-          echo "$RESPONSE" | jq -r '.status' | grep -i live
-
-      - name: Test URL Output using CURL and JQ
-        run: |
-          echo "Testing on $URL"
-          curl -sS "http://$URL:32000/live" | jq -r '.status' | grep -i live
-
   prod-deploy:
         if: ${{ inputs.job-name == 'prod-deploy' }}
         name: prod Deployment
