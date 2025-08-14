@@ -54,7 +54,7 @@ jobs:
         uses: cschleiden/replace-tokens@v1
         with:
           tokenPrefix: '__'
-          tokenSuffix: '__'
+          tokenSuffix: '__' 
           files: '["${{ inputs.kubernates-manifest-path }}*.yaml"]'
         env:
           NAMESPACE: ${{ vars.NAMESPACE }}
