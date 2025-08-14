@@ -3,27 +3,25 @@ const express = require('express');
 const OS = require('os');
 const bodyParser = require('body-parser');
 const mongoose = require("mongoose");
-const app = express();
 const cors = require('cors');
 
+const app = express();
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, '/')));
 app.use(cors());
 
-// MongoDB Connection
-mongoose.connect('mongodb+srv://supercluster.d83jj.mongodb.net/superData', {
-    user: 'superuser',
-    pass: 'SuperPassword',
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-}).then(() => {
-    // console.log("MongoDB Connection Successful");
-}).catch((err) => {
-    console.log("MongoDB connection error: " + err);
-});
+// MongoDB Connection using env variables;
+
+const mongoUri = process.env.MONGO_URL;
+mongoose.connect(mongoUri)
+    .then(() => {
+        console.log("✅ Connected to MongoDB");
+    })
+    .catch((err) => {
+        console.log("❌ MongoDB connection error: " + err);
+    });
 
 const Schema = mongoose.Schema;
-
 const dataSchema = new Schema({
     name: String,
     id: Number,
@@ -35,7 +33,6 @@ const dataSchema = new Schema({
 
 const planetModel = mongoose.model('planets', dataSchema);
 
-// ✅ تعديل هنا باستخدام async/await
 app.post('/planet', async (req, res) => {
     try {
         const planetData = await planetModel.findOne({ id: req.body.id });
@@ -63,20 +60,16 @@ app.get('/os', (req, res) => {
 
 app.get('/live', (req, res) => {
     res.setHeader('Content-Type', 'application/json');
-    res.send({
-        "status": "live"
-    });
+    res.send({ "status": "live" });
 });
 
 app.get('/ready', (req, res) => {
     res.setHeader('Content-Type', 'application/json');
-    res.send({
-        "status": "ready"
-    });
+    res.send({ "status": "ready" });
 });
 
 app.listen(3000, () => {
-    console.log("Server successfully running on port - " + 3000);
+    console.log("🚀 Server successfully running on port 3000");
 });
 
 module.exports = app;
