@@ -10,7 +10,7 @@ env:
     MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
     MONGO_URL: mongodb+srv://${{ secrets.MONGO_USERNAME }}:${{ secrets.MONGO_PASSWORD }}@supercluster.d83jj.mongodb.net/superData?retryWrites=true&w=majority
 jobs:
-  # unit-tests:
+  # unit-tests: 
 
   #   runs-on: self-hosted
   #   continue-on-error: true
