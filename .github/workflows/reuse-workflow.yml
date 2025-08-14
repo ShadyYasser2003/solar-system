@@ -12,7 +12,7 @@ on:
    inputs:
       MONGO_URL:
         required: true
-        type: string
+        type: string 
       kubernates-manifest-path:
         description: 'Path to the Kubernetes manifest files'
         required: true
@@ -24,7 +24,6 @@ on:
         required: true
         type: string
       
-
 
 jobs:
 
