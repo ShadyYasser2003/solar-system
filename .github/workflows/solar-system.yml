@@ -134,7 +134,7 @@ jobs:
   dev-deploy:
     name: dev Deployment
     if: contains(github.ref, 'feature/')
-    # needs: docker
+    needs: docker
     uses: ./.github/workflows/reuse-workflow.yml
     with:
       job-name: "dev-deploy"
@@ -161,7 +161,7 @@ jobs:
           echo "Testing on $URL"
           curl -sS "http://$URL:32000/live" | jq -r '.status' | grep -i live   
 
-          
+
   prod-deploy:
     name: prod Deployment
     needs: docker
