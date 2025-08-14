@@ -2,7 +2,7 @@ name: solar-system
 
 on:
   push:
-    branches:
+    branches: 
       - main
       - 'feature/*'
 env:
