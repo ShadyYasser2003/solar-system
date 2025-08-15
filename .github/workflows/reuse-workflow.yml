@@ -9,6 +9,11 @@ on:
         required: true
       MONGO_PASSWORD: 
         required: true
+   outputs:
+      ingress_ip:
+        description: 'The IP address of the ingress controller'
+        value: ${{ jobs.reuse-deploy.outputs.ingress_ip }}   
+        
    inputs:
       MONGO_URL:
         required: true
@@ -23,7 +28,8 @@ on:
         default: 'development'
         required: true
         type: string
-      
+
+    
 
 jobs:
 
