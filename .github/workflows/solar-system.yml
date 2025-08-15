@@ -51,9 +51,10 @@ jobs:
           path: test-results.xml
 
   code-coverage:
-      
+
         name: Code Coverage
         runs-on: self-hosted
+        needs: unit-tests
         steps:
           - name: Checkout Repository
             uses: actions/checkout@v4
