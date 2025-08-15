@@ -12,10 +12,8 @@ app.use(cors());
 
 // MongoDB Connection using env variables;
 
-const mongoUser = process.env.MONGO_USERNAME;
-const mongoPassword = process.env.MONGO_PASSWORD;
-const mongoUrl = `mongodb+srv://${mongoUser}:${mongoPassword}@supercluster.d83jj.mongodb.net/superData?retryWrites=true&w=majority`;
-mongoose.connect(mongoUrl)
+const mongoUri = process.env.MONGO_URL;
+mongoose.connect(mongoUri)
     .then(() => {
         console.log("✅ Connected to MongoDB");
     })
