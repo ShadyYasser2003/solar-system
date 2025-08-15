@@ -8,47 +8,47 @@ on:
 env:
     MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
     MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
-    MONGO_URL: mongodb+srv://${{ secrets.MONGO_USERNAME }}:${{ secrets.MONGO_PASSWORD }}@supercluster.d83jj.mongodb.net/superData?retryWrites=true&w=majority
+    MONGO_URL: mongodb+srv://supercluster.d83jj.mongodb.net/superData
 jobs:
-  # unit-tests: 
+  unit-tests: 
 
-  #   runs-on: self-hosted
-  #   continue-on-error: true
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
+    runs-on: self-hosted
+    continue-on-error: true
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-  #     - name: Set up Node.js
-  #       uses: actions/setup-node@v3
-  #       with:
-  #         node-version: '18'
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
           
-  #     - name: Cache NPM dependencies
-  #       uses: actions/cache@v3
-  #       with:
-  #         path: node_modules
-  #         key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+      - name: Cache NPM dependencies
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
 
-  #     - name: Install dependencies
-  #       run: npm install
+      - name: Install dependencies
+        run: npm install
 
-  #     - name: Run unit tests
-  #       id: nodejs-unit-testing-step 
-  #       run: npm test
+      - name: Run unit tests
+        id: nodejs-unit-testing-step 
+        run: npm test
 
-      # - name: Upload test results
-      #   if: always()
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: test-results 
-      #     path: test-results.xml
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results 
+          path: test-results.xml
 
-      # - name: Archive Test Result
-      #   if:  (steps.nodejs-unit-testing-step.outcome == 'failure' || steps.nodejs-unit-testing-step.outcome == 'success') # work with failure only of workflow
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: Mocha-Test-Result
-      #     path: test-results.xml
+      - name: Archive Test Result
+        if:  (steps.nodejs-unit-testing-step.outcome == 'failure' || steps.nodejs-unit-testing-step.outcome == 'success') # work with failure only of workflow
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mocha-Test-Result
+          path: test-results.xml
 
   code-coverage:
       
