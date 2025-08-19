@@ -49,7 +49,7 @@ jobs:
           name: Mocha-Test-Result
           path: test-results.xml
 
-  code-coverage:
+  code-coverage: 
 
         name: Code Coverage
         runs-on: self-hosted
