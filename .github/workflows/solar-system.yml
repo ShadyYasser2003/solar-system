@@ -10,7 +10,7 @@ env:
     MONGO_URL: mongodb+srv://${{ secrets.MONGO_USERNAME }}:${{ secrets.MONGO_PASSWORD }}@supercluster.d83jj.mongodb.net/superData?retryWrites=true&w=majority
 jobs:
   unit-tests: 
-
+    
     runs-on: self-hosted
     continue-on-error: true
     steps:
@@ -53,7 +53,7 @@ jobs:
 
         name: Code Coverage
         runs-on: self-hosted
-        # needs: unit-tests
+        needs: unit-tests
         steps:
           - name: Checkout Repository
             uses: actions/checkout@v4
@@ -77,8 +77,30 @@ jobs:
               path: coverage/
               retention-days: 5
 
-       
-           
+  reports-s3:
+      needs: [code-coverage, unit-tests]
+      name: AMS S3 - Upload Reports
+      runs-on: ubuntu-latest
+      continue-on-error: true
+      steps:
+        - name: Download Mocha Test Artifact
+          uses: actions/download-artifact@v3
+          with:
+            name: Mocha-Test-Result
+
+        - name: Download Code Coverage Artifact
+          uses: actions/download-artifact@v3
+          with:
+            name: Code-Coverage-Result
+
+        - name: Merge Test Files
+          run: |
+            ls -ltr
+            mkdir reports-${{ github.sha }}
+            mv cobertura-coverage.xml reports-${{ github.sha }}/
+            mv test-results.xml reports-${{ github.sha }}/
+            ls -ltr reports-${{ github.sha }}/
+            
   docker: 
     permissions:
       contents: read
@@ -201,3 +223,5 @@ jobs:
             run: |
               echo "Testing on $URL"
               curl -sS "http://$URL:32000/live" | jq -r '.status' | grep -i live
+
+  
