@@ -1,4 +1,3 @@
-name: solar-system
 
 on:
   push:
@@ -6,54 +5,51 @@ on:
       - main
       - 'feature/*'
 env:
-    MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }}
+    MONGO_USERNAME: ${{ secrets.MONGO_USERNAME }} 
     MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
     MONGO_URL: mongodb+srv://${{ secrets.MONGO_USERNAME }}:${{ secrets.MONGO_PASSWORD }}@supercluster.d83jj.mongodb.net/superData?retryWrites=true&w=majority
 jobs:
-  # unit-tests: 
+  unit-tests: 
+    
+    runs-on: self-hosted
+    continue-on-error: true
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-  #   runs-on: self-hosted
-  #   continue-on-error: true
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-
-  #     - name: Set up Node.js
-  #       uses: actions/setup-node@v3
-  #       with:
-  #         node-version: '18'
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
           
-  #     - name: Cache NPM dependencies
-  #       uses: actions/cache@v3
-  #       with:
-  #         path: node_modules
-  #         key: ${{ runner.os }}-node-modules-${{ hashFiles('package-lock.json') }}
+      - name: composit action -cache and install npm Dependancies
+        uses: ./.github/npm-action
+        with:
+          path-of-folder: node_modules
 
-  #     - name: Install dependencies
-  #       run: npm install
+      - name: Run unit tests
+        id: nodejs-unit-testing-step 
+        run: npm test
 
-  #     - name: Run unit tests
-  #       id: nodejs-unit-testing-step 
-  #       run: npm test
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results 
+          path: test-results.xml
 
-      # - name: Upload test results
-      #   if: always()
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: test-results 
-      #     path: test-results.xml
+      - name: Archive Test Result
+        if:  (steps.nodejs-unit-testing-step.outcome == 'failure' || steps.nodejs-unit-testing-step.outcome == 'success') # work with failure only of workflow
+        uses: actions/upload-artifact@v4
+        with:
+          name: Mocha-Test-Result
+          path: test-results.xml
 
-      # - name: Archive Test Result
-      #   if:  (steps.nodejs-unit-testing-step.outcome == 'failure' || steps.nodejs-unit-testing-step.outcome == 'success') # work with failure only of workflow
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: Mocha-Test-Result
-      #     path: test-results.xml
+  code-coverage: 
 
-  code-coverage:
-      
         name: Code Coverage
         runs-on: self-hosted
+        needs: unit-tests
         steps:
           - name: Checkout Repository
             uses: actions/checkout@v4
@@ -63,8 +59,11 @@ jobs:
             with:
               node-version: 18
               
-          - name: Install Dependencies
-            run: npm install
+          - name: composit action -cache and install npm Dependancies
+            uses: ./.github/npm-action
+            with:
+              path-of-folder: node_modules
+
             
           - name: Check Code Coverage
             run: npm run coverage
@@ -77,8 +76,30 @@ jobs:
               path: coverage/
               retention-days: 5
 
-       
-           
+  reports-s3:
+      needs: [code-coverage, unit-tests]
+      name: AMS S3 - Upload Reports
+      runs-on: ubuntu-latest
+      continue-on-error: true
+      steps:
+        - name: Download Mocha Test Artifact
+          uses: actions/download-artifact@v4
+          with:
+            name: Mocha-Test-Result
+
+        - name: Download Code Coverage Artifact
+          uses: actions/download-artifact@v4
+          with:
+            name: Code-Coverage-Result
+
+        - name: Merge Test Files
+          run: |
+            ls -ltr
+            mkdir reports-${{ github.sha }}
+            mv cobertura-coverage.xml reports-${{ github.sha }}/
+            mv test-results.xml reports-${{ github.sha }}/
+            ls -ltr reports-${{ github.sha }}/
+            
   docker: 
     permissions:
       contents: read
@@ -179,7 +200,7 @@ jobs:
     with:
       MONGO_URL: ${{ vars.MONGO_URL }}
       kubernates-manifest-path: kubernetes/production/
-      environment: production
+      environment: production 
       
 
   prod-integration-testing:
@@ -201,3 +222,22 @@ jobs:
             run: |
               echo "Testing on $URL"
               curl -sS "http://$URL:32000/live" | jq -r '.status' | grep -i live
+
+  # slack-notification:
+  #   if: always()
+  #   name: Slack Notification
+  #   needs: [dev-integration-testing, prod-integration-testing]
+  #   continue-on-error: true
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+      
+  #     - name: Slack Notification
+  #       uses: rtCamp/action-slack-notify@v2
+  #       env:
+  #         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+  #         SLACK_CHANNEL: github-actions-channel-2
+  #         SLACK_COLOR: ${{ job.status }} # or a specific color like 'good' or '#ff00ff'
+  #         SLACK_ICON: https://gitlab.com/sidd-harth/solar-system/-/raw/main/images/saturn.png
+  #         SLACK_MESSAGE: ":hammer_and_wrench Triggered by ${{ github.actor }}"
+  #         SLACK_TITLE: Information
