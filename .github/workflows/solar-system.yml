@@ -52,7 +52,7 @@ jobs:
         needs: unit-tests
         container:
           image: node:18
-          options: --user node # to avoid permission issues with the mounted volume
+          options: --user root # to avoid permission issues with the mounted volume
         
         continue-on-error: true
         steps:
