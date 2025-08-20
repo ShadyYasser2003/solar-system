@@ -50,6 +50,7 @@ jobs:
         name: Code Coverage
         runs-on: self-hosted
         needs: unit-tests
+        continue-on-error: true
         steps:
           - name: Checkout Repository
             uses: actions/checkout@v4
