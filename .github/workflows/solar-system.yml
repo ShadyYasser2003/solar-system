@@ -93,7 +93,7 @@ jobs:
             name: Code-Coverage-Result
 
         - name: Merge Test Files
-          run: |
+          run: | 
             ls -ltr
             mkdir reports-${{ github.sha }}
             mv cobertura-coverage.xml reports-${{ github.sha }}/
