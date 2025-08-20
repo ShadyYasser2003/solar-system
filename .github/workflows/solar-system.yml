@@ -113,7 +113,7 @@ jobs:
             
  
             
-  docker: 
+  docker:  
     permissions:
       contents: read
       packages: write
