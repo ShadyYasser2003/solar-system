@@ -17,6 +17,10 @@ jobs:
       options: --user root # to avoid permission issues with the mounted volume
     continue-on-error: true
     steps:
+      - name: Clean old runner diag logs
+        run: |
+         rm -f /home/shady_yasser/actions-runner/_diag/pages/*.log || true
+      
       - name: Checkout code
         uses: actions/checkout@v4
 
