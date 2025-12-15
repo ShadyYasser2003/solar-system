@@ -15,16 +15,14 @@ A production-ready Node.js microservice showcasing a complete **DevOps Lifecycle
 The CI/CD pipeline ensures code quality and seamless deployment using a reusable workflow strategy:
 
 ```mermaid
-graph TD
-    Push[Code Push] --> Test[Unit Tests and Coverage]
-    Test -->|Success| Upload[Upload Reports to S3]
-    Upload --> Build[Docker Build and Push]
-    Build --> DeployDev[Deploy to K8s Dev]
-    DeployDev -->|Manual Approval| DeployProd[Deploy to K8s Prod]
-    
-    subgraph Infrastructure
-    Terraform -->|Provisions| S3[AWS S3 Bucket]
-    end
+graph LR
+    UnitTests[unit-tests] --> CodeCoverage[Code Coverage]
+    CodeCoverage --> Docker[docker]
+    CodeCoverage --> S3Upload[AMS S3 - Upload Reports]
+    Docker --> DevDeploy["dev Deploy... / reuse-deploy"]
+    DevDeploy --> DevTest[Dev Integration Testing]
+    Docker --> ProdDeploy["prod Deployme... / reuse-deploy"]
+    ProdDeploy --> ProdTest[PROD Integration Testing]
 ```
  
 ### Key Features
