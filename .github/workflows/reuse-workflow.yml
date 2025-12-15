@@ -29,8 +29,6 @@ on:
         required: true
         type: string
 
-    
-
 jobs:
 
   reuse-deploy:
