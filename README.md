@@ -16,17 +16,17 @@ The CI/CD pipeline ensures code quality and seamless deployment using a reusable
 
 ```mermaid
 graph TD
-    Push[Code Push] --> Test[Unit Tests & Coverage]
+    Push[Code Push] --> Test[Unit Tests and Coverage]
     Test -->|Success| Upload[Upload Reports to S3]
-    Upload --> Build[Docker Build & Push]
-    Build --> DeployDev[Deploy to K8s (Dev)]
-    DeployDev -->|Manual Approval| DeployProd[Deploy to K8s (Prod)]
+    Upload --> Build[Docker Build and Push]
+    Build --> DeployDev[Deploy to K8s Dev]
+    DeployDev -->|Manual Approval| DeployProd[Deploy to K8s Prod]
     
-    subgraph "Infrastructure"
+    subgraph Infrastructure
     Terraform -->|Provisions| S3[AWS S3 Bucket]
     end
 ```
-
+ 
 ### Key Features
 - **Advanced CI/CD**: Modularized build process with GitHub Actions reusable workflows.
 - **Custom Actions**: Local composite action (`npm-action`) for efficient dependency setup.
