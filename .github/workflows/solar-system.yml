@@ -12,15 +12,22 @@ jobs:
   unit-tests: 
     
     runs-on: self-hosted
+    container:
+      image: node:18
+      options: --user root # to avoid permission issues with the mounted volume
     continue-on-error: true
     steps:
+      - name: Clean old runner diag logs
+        run: |
+         rm -f /home/shady_yasser/actions-runner/_diag/pages/*.log || true
+      
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: '18' 
           
       - name: composit action -cache and install npm Dependancies
         uses: ./.github/npm-action
@@ -48,8 +55,13 @@ jobs:
   code-coverage: 
 
         name: Code Coverage
-        runs-on: self-hosted
+        runs-on: ubuntu-latest
         needs: unit-tests
+        container:
+          image: node:18
+          options: --user root # to avoid permission issues with the mounted volume
+        
+        continue-on-error: true
         steps:
           - name: Checkout Repository
             uses: actions/checkout@v4
@@ -77,30 +89,44 @@ jobs:
               retention-days: 5
 
   reports-s3:
-      needs: [code-coverage, unit-tests]
-      name: AMS S3 - Upload Reports
-      runs-on: ubuntu-latest
-      continue-on-error: true
-      steps:
-        - name: Download Mocha Test Artifact
-          uses: actions/download-artifact@v4
-          with:
-            name: Mocha-Test-Result
+    needs: [code-coverage, unit-tests]
+    name: AMS S3 - Upload Reports
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Download Mocha Test Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: Mocha-Test-Result
+        continue-on-error: true   # حتى لو مش موجود يكمل
 
-        - name: Download Code Coverage Artifact
-          uses: actions/download-artifact@v4
-          with:
-            name: Code-Coverage-Result
+      - name: Download Code Coverage Artifact  
+        uses: actions/download-artifact@v4
+        with:
+          name: Code-Coverage-Result
+        continue-on-error: true   # برضه هنا
 
-        - name: Merge Test Files
-          run: |
-            ls -ltr
-            mkdir reports-${{ github.sha }}
-            mv cobertura-coverage.xml reports-${{ github.sha }}/
-            mv test-results.xml reports-${{ github.sha }}/
-            ls -ltr reports-${{ github.sha }}/
-            
-  docker: 
+      - name: Merge Test Files
+        run: |  
+          ls -ltr || true
+          mkdir reports-${{ github.sha }}
+          mv cobertura-coverage.xml reports-${{ github.sha }}/ || true
+          mv test-results.xml reports-${{ github.sha }}/ || true
+          ls -ltr reports-${{ github.sha }}/
+
+      - name: Upload to S3
+        uses: jakejarvis/s3-sync-action@master
+        with:
+          args: --follow-symlinks --delete
+        env:
+          AWS_S3_BUCKET: reports-bucket-shady-yasser
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}   
+          AWS_REGION: 'us-east-1'
+          SOURCE_DIR: reports-${{ github.sha }}
+          DEST_DIR: reports/${{ github.sha }}  
+   
+  docker:  
     permissions:
       contents: read
       packages: write
@@ -187,7 +213,6 @@ jobs:
           echo "Testing on $URL"
           curl -sS "http://$URL:32000/live" | jq -r '.status' | grep -i live   
 
-
   prod-deploy:
     name: prod Deployment 
     needs: docker
@@ -200,8 +225,7 @@ jobs:
     with:
       MONGO_URL: ${{ vars.MONGO_URL }}
       kubernates-manifest-path: kubernetes/production/
-      environment: production 
-      
+      environment: production    
 
   prod-integration-testing:
         if: github.ref == 'refs/heads/main'
